@@ -1,0 +1,23 @@
+{
+    "_comment": "This JSON file contains the numbers associated with common non-numeric messages. For media entries, the URL of the message just has to contain one of the keys",
+    "text": {
+        "one": 1,
+        "two": 2,
+        "three": 3,
+        "four": 4,
+        "five": 5,
+        "six": 6,
+        "seven": 7,
+        "eight": 8,
+        "nine": 9,
+        "ten": 10,
+        "eleven": 11,
+        "nice": 69,
+        "blaze it": 420,
+        "💯": 100
+    },
+    "media": {
+        "benedict-cumberbatch-endgame-doctor-strange-one-one-more": 1,
+        "958111004162674708/1074820940157964318/image0.gif": 1
+    }
+}

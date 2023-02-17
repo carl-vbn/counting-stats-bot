@@ -1,3 +1,5 @@
+const fs = require('fs/promises');
+const path = require('path');
 const { SlashCommandBuilder, CommandInteraction, ChannelType } = require('discord.js');
 
 module.exports = {
@@ -22,6 +24,21 @@ module.exports = {
      * @param {CommandInteraction} interaction 
      */
     async execute(interaction) {
-        await interaction.reply(`Command not implemented yet`);
+        if (interaction.member.permissions.has("ADMINISTRATOR")) {
+            if (interaction.options.getSubcommand() == 'set-counting-channel') {
+                const configData = global.config[interaction.guild.id];
+                configData['countingChannel'] = interaction.options.get('channel').channel.id;
+                try {
+                    const configFile = path.join(process.cwd(), 'config', interaction.guild.id+'.json');
+                    await fs.writeFile(configFile, JSON.stringify(configData));
+                    await interaction.reply({content: `Channel updated.`, ephemeral: true});
+                } catch (err) {
+                    console.error(err);
+                    await interaction.reply({content: `Failed to save guild config file.`, ephemeral: true});
+                }
+            }
+        } else {
+            await interaction.reply({content: `You need to be a server administrator to run that command!`, ephemeral: true});
+        }
     },
 };

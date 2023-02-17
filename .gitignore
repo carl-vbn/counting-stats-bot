@@ -126,5 +126,6 @@ dist
 .yarn/install-state.gz
 .pnp.*
 
-# bot config directory
+# bot config and cache directories (are automatically generated)
 config/
+cache/

@@ -17,14 +17,14 @@ exports.register = async function (client) {
 
         const rest = new REST({ version: '10' }).setToken(process.env.BOT_TOKEN);
 
-        for (const guild of client.guilds.cache) {
+        for (const [guildId, guild] of client.guilds.cache) {
             // The put method is used to fully refresh all commands in the guild with the current set
             const data = await rest.put(
-                Routes.applicationGuildCommands(process.env.CLIENT_ID, guild[0]),
+                Routes.applicationGuildCommands(process.env.CLIENT_ID, guildId),
                 { body: commands },
             );
 
-            console.log(`Successfully reloaded ${data.length} application commands for guild ${guild[1].name}`);
+            console.log(`Successfully reloaded ${data.length} application commands for guild '${guild.name}'`);
         }
 
     }
@@ -44,7 +44,7 @@ exports.register = async function (client) {
         const command = interaction.client.commands.get(interaction.commandName);
 
         if (!command) {
-            console.error(`Command handler for ${interaction.commandName} not found.`);
+            console.error(`Command handler for '${interaction.commandName}' not found.`);
             return;
         }
 
