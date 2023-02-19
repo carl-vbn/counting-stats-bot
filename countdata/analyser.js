@@ -8,10 +8,10 @@ function getMostActiveCounters(messages) {
     const messagesPerMember = {};
 
     for (const msg of messages) {
-        if (messagesPerMember.hasOwnProperty(msg.member.user.username)) {
-            messagesPerMember[msg.member.user.username] += 1;
+        if (messagesPerMember.hasOwnProperty(msg.author.username)) {
+            messagesPerMember[msg.author.username] += 1;
         } else {
-            messagesPerMember[msg.member.user.username] = 1;
+            messagesPerMember[msg.author.username] = 1;
         }
     }
 

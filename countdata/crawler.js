@@ -5,6 +5,8 @@ const { loadCache, cacheMessages } = require('./cache');
  * @param {TextChannel} channel 
  */
 async function loadAllMessages(channel) {
+    console.log(`Loading all messages in channel '${channel.name}'...`);
+
     // Create message pointer
     let message = await channel.messages
         .fetch({ limit: 1 })
@@ -17,11 +19,14 @@ async function loadAllMessages(channel) {
             .fetch({ limit: 100, before: message.id })
             .then(messagePage => {
                 messagePage.forEach(msg => messages.push(msg));
+                console.log(messages.length);
 
                 // Update our message pointer to be last message in page of messages
                 message = 0 < messagePage.size ? messagePage.at(messagePage.size - 1) : null;
             });
     }
+
+    console.log(`Done loading all messages in channel '${channel.name}'.`);
 
     return messages.reverse();
 }
@@ -55,6 +60,10 @@ async function retrieveMessages(channel, ignoreCache=false) {
     return cache;
 }
 
+function isBinary(numString) {
+    return numString.split('').filter(c => c != '1' && c != '0').length == 0;
+}
+
 /**
  * Constructs a {messageId: number} object from a list of Discord messages
  * Messages that can't "numerized" will be assigned null
@@ -68,7 +77,7 @@ function assignNumbers(messages) {
         const content = message.content;
 
         const numericContent = Number(content);
-        if (numericContent != NaN && numericContent % 1 === 0) { // Number is stricter than parseInt but can also parse floats so we need to check if the remainder is null.
+        if (numericContent != NaN && numericContent % 1 === 0 && (content.length == 1 || !isBinary(content))) { // Number is stricter than parseInt but can also parse floats so we need to check if the remainder is null. Numbers with only ones and zeroes could be binary, it's safer to just ignore them.
             assignedNumbers[message.id] = numericContent;
         } else {
             const normalizedContent = content.toLowerCase().replace(/!/g, '');

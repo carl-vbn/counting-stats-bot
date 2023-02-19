@@ -24,7 +24,7 @@ module.exports = {
      * @param {CommandInteraction} interaction 
      */
     async execute(interaction) {
-        if (interaction.member.permissions.has("ADMINISTRATOR")) {
+        if (interaction.member.id == process.env.ADMIN) {
             if (interaction.options.getSubcommand() == 'set-counting-channel') {
                 const configData = global.config[interaction.guild.id];
                 configData['countingChannel'] = interaction.options.get('channel').channel.id;

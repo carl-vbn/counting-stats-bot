@@ -25,18 +25,19 @@ async function cacheMessages(channelId, messages) {
     if (cachingPromise) await cachingPromise;
 
     const cacheFile = path.join(process.cwd(), 'cache', channelId+'.json');
+    fs.writeFile(path.join(process.cwd(), 'cache', channelId+'.recovery.json'), JSON.stringify(messages));
     cachingPromise = fs.writeFile(cacheFile, JSON.stringify(messages.map(msg => (
         {
             id: msg.id,
-            member: {
-                id: msg.member.id,
-                user: { username: msg.member.user.username }
+            author: {
+                id: msg.author?.id,
+                username: msg.author?.username
             },
             content: msg.content,
-            attachments: msg.attachments.map(a => ({
+            attachments: msg.attachments ? msg.attachments.map(a => ({
                 id: a.id,
                 url: a.url
-            }))
+            })) : []
         }
     ) )));
 

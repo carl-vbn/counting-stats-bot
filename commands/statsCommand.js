@@ -35,7 +35,7 @@ module.exports = {
             .setTimestamp()
             .setFooter({ text: 'Requested by '+interaction.user.username, iconURL: interaction.user.avatarURL() });
 
-            await interaction.reply({embeds: [statsEmbed]});
+            try {await interaction.reply({embeds: [statsEmbed]}); } catch (err) { console.error(err); }
         } else {
             await interaction.reply({content: `This server doesn't have a counting channel set!`, ephemeral: true});
         }

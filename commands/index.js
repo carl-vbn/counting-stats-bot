@@ -52,7 +52,7 @@ exports.register = async function (client) {
             await command.execute(interaction);
         } catch (error) {
             console.error(error);
-            await interaction.reply({ content: 'An internal error occured while executing this command.', ephemeral: true });
+            try { await interaction.reply({ content: 'An internal error occured while executing this command.', ephemeral: true }); } catch (err) { console.error(err);  }
         }
     });
 
