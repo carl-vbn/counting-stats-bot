@@ -1,12 +1,10 @@
 const { TextChannel, Message } = require('discord.js');
+const { loadCache, cacheMessages } = require('./cache');
 
 /**
- * 
  * @param {TextChannel} channel 
  */
-async function retrieveMessages(channel) {
-    console.log(`Retrieving all messages in channel ${channel.name}...`)
-
+async function loadAllMessages(channel) {
     // Create message pointer
     let message = await channel.messages
         .fetch({ limit: 1 })
@@ -25,7 +23,36 @@ async function retrieveMessages(channel) {
             });
     }
 
-    return messages;
+    return messages.reverse();
+}
+
+/**
+ * @param {TextChannel} channel 
+ */
+async function retrieveMessages(channel, ignoreCache=false) {
+    const cache = ignoreCache ? [] : await loadCache(channel.id);
+    if (cache.length == 0) {
+        const messages = await loadAllMessages(channel);
+        await cacheMessages(channel.id, messages);
+        return messages;
+    }
+
+    let message = cache[cache.length-1];
+
+    while (message) {
+        await channel.messages
+            .fetch({ limit: 100, after: message.id })
+            .then(messagePage => {
+                messagePage.forEach(msg => cache.push(msg));
+
+                // Update our message pointer to be last message in page of messages
+                message = 0 < messagePage.size ? messagePage.at(messagePage.size - 1) : null;
+            });
+    }
+
+    await cacheMessages(channel.id, cache);
+
+    return cache;
 }
 
 /**
@@ -118,5 +145,5 @@ exports.crawlAll = (async function(channel) {
     const assignedNumbers = assignNumbers(messages);
     const numbers = Object.entries(assignedNumbers).sort((a,b) => a[0].localeCompare(b[0])).map(e => e[1]); // Sort numbers by the message id (chronological order) and remove the message ID afterwards (only keep numbers)
     fillByInterpolation(numbers); // Fill in as many missing numbers as possible
-    return numbers;
+    return {messages: messages, numbers: numbers};
 });

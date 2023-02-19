@@ -1,4 +1,5 @@
-const { SlashCommandBuilder, CommandInteraction } = require('discord.js');
+const { SlashCommandBuilder, CommandInteraction, EmbedBuilder } = require('discord.js');
+const analyser = require('../countdata/analyser');
 
 const crawler = require('../countdata/crawler');
 
@@ -14,9 +15,27 @@ module.exports = {
     async execute(interaction) {
         if (global.config[interaction.guild.id].hasOwnProperty('countingChannel')) {
             const channel = await interaction.guild.channels.fetch(global.config[interaction.guild.id].countingChannel);
-            const count = await crawler.crawlAll(channel);
+            const {messages, numbers} = await crawler.crawlAll(channel);
+            const mostActiveCounters = analyser.getMostActiveCounters(messages);
+            const highestNumber = analyser.getHighestNumber(numbers);
+            const chainCount = analyser.getChainCount(numbers);
 
-            await interaction.reply({content: `Found ${count.length} messages. ${count.filter(e => e == null).length} of them are null.`, ephemeral: false});
+            const statsEmbed = new EmbedBuilder()
+            .setColor(0x0099FF)
+            .setTitle('Counting stats')
+            .setURL('https://www.wikicu.com/Counting')
+            .setDescription('Latest counting statistics')
+            .setThumbnail('https://cdn.discordapp.com/icons/869050227397656586/574ebb413d3da02b1cae268e4e54fa71.webp')
+            .addFields(
+                { name: 'Number of messages', value: `${messages.length}` },
+                { name: 'Highest number', value: `${highestNumber}` },
+                { name: 'Number of attempts', value: `${chainCount}` },
+                { name: 'Most active counters', value: mostActiveCounters.slice(0, 10).map(mac => `- ${mac[0]} (${mac[1]} messages)`).join('\n') }
+            )
+            .setTimestamp()
+            .setFooter({ text: 'Requested by '+interaction.user.username, iconURL: interaction.user.avatarURL() });
+
+            await interaction.reply({embeds: [statsEmbed]});
         } else {
             await interaction.reply({content: `This server doesn't have a counting channel set!`, ephemeral: true});
         }
