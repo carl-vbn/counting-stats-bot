@@ -28,7 +28,7 @@ async function loadAllMessages(channel) {
 
     console.log(`Done loading all messages in channel '${channel.name}'.`);
 
-    return messages.reverse();
+    return messages.sort((a,b) => a.createdTimestamp - b.createdTimestamp);
 }
 
 /**
@@ -43,17 +43,21 @@ async function retrieveMessages(channel, ignoreCache=false) {
     }
 
     let message = cache[cache.length-1];
+    const newMessages = [];
 
     while (message) {
         await channel.messages
             .fetch({ limit: 100, after: message.id })
             .then(messagePage => {
-                messagePage.forEach(msg => cache.push(msg));
+                messagePage = messagePage.sort((a,b) => a.createdTimestamp - b.createdTimestamp);
+                messagePage.forEach(msg => newMessages.push(msg));
 
                 // Update our message pointer to be last message in page of messages
                 message = 0 < messagePage.size ? messagePage.at(messagePage.size - 1) : null;
             });
     }
+
+    cache.push(...newMessages);
 
     await cacheMessages(channel.id, cache);
 
@@ -65,75 +69,69 @@ function isBinary(numString) {
 }
 
 /**
- * Constructs a {messageId: number} object from a list of Discord messages
- * Messages that can't "numerized" will be assigned null
- * @param {Message[]} messages 
+ * @param {Message} message 
+ * @param {object} commonMessageDict 
+ * @returns 
  */
-function assignNumbers(messages) {
-    const commonMessages = require('../common_messages.json');
-    const assignedNumbers = {};
-
-    for (const message of messages) {
-        const content = message.content;
-
-        const numericContent = Number(content);
-        if (numericContent != NaN && numericContent % 1 === 0 && (content.length == 1 || !isBinary(content))) { // Number is stricter than parseInt but can also parse floats so we need to check if the remainder is null. Numbers with only ones and zeroes could be binary, it's safer to just ignore them.
-            assignedNumbers[message.id] = numericContent;
-        } else {
-            const normalizedContent = content.toLowerCase().replace(/!/g, '');
-            if (commonMessages.text.hasOwnProperty(normalizedContent)) {
-                assignedNumbers[message.id] = commonMessages[normalizedContent];
-            } else {
-                for (const mediaEntry of Object.entries(commonMessages.media)) {
-                    if (content.includes(mediaEntry[0])) {
-                        assignedNumbers[message.id] = mediaEntry[1];
-                        break;
-                    } else {
-                        let doBreak = false;
-                        message.attachments.forEach((attachment) => {
-                            if (!doBreak && attachment.url.includes(mediaEntry[0])) {
-                                assignedNumbers[message.id] = mediaEntry[1];
-                                doBreak = true;
-                            }
-                        });
-
-                        if (doBreak) break;
-                    }
-                }
-
-                if (!assignedNumbers.hasOwnProperty(message.id)) {
-                    assignedNumbers[message.id] = null;
-                }
-            }
-        }
-
+function findPossibleValues(message, commonMessageDict) {
+    const possibleValues = [];
+    const messageContent = message.content != undefined ? message.content : '';
+    
+    const numericValue = Number(messageContent);
+    if (numericValue != NaN && numericValue % 1 === 0) {
+        possibleValues.push(numericValue);
     }
 
-    return assignedNumbers;
+    for (const [commonMessagePattern, associatedNumber] of Object.entries(commonMessageDict)) {
+        if (messageContent.toLowerCase().match(commonMessagePattern.toLowerCase()) != null) {
+            possibleValues.push(associatedNumber);
+        }
+
+        if (message.attachments != undefined) for (const attachment of message.attachments) {
+            if (attachment[1].url.toLowerCase().match(commonMessagePattern.toLowerCase()) != null) {
+                possibleValues.push(associatedNumber);
+            }
+        }
+    }
+
+    if (isBinary(messageContent)) possibleValues.push(parseInt(messageContent, 2));
+    
+    const withoutParenthesis = messageContent.split('(')[0].trim();
+    if (withoutParenthesis != messageContent) {
+        const parenthesisContent = messageContent.split('(')[1].split(')')[0];
+        if (withoutParenthesis.length > 0) possibleValues.push(...findPossibleValues(withoutParenthesis, commonMessageDict));
+        if (parenthesisContent.length > 0) possibleValues.push(...findPossibleValues(parenthesisContent, commonMessageDict));
+    }
+
+    return new Set(possibleValues);
 }
 
 // Tries to add missing numbers by infering them from surrounding numbers
-function fillByInterpolation(numberList) {
+function assignNumbers(messages) {
+    const commonMessages = require('../common_messages.json');
+    const messagePossibleValues = messages.map(msg => findPossibleValues(msg, commonMessages));
+
     let startIndex = 0;
-    while (startIndex < numberList.length-1) {
-        if (numberList[startIndex] != null) {
+    while (startIndex < messagePossibleValues.length-1) {
+        if (messagePossibleValues[startIndex].length > 0) {
             for (let i = 1; true; i++) {
-                if (startIndex+i >= numberList.length) {
+                if (startIndex+i >= messagePossibleValues.length) {
                     // Reached the end of the list
 
                     return;
                 }
 
-                if (numberList[startIndex+i] != null) {
-                    if (numberList[startIndex+i] == numberList[startIndex] + i) {
+                if (messagePossibleValues[startIndex+i].length > 0) {
+                    const matchingNumbers = messagePossibleValues[startIndex].filter(num => messagePossibleValues[startIndex+i].includes(num+i));
+                    if (matchingNumbers.length > 0) {
                         // Fill all values between startIndex and startIndex+i (excluded)
-                        for (let j = 1; j<i; j++) numberList[startIndex+j] = numberList[startIndex] + j;
+                        for (let j = 1; j<i; j++) messagePossibleValues[startIndex+j] = matchingNumbers.map(num => num+j);
                     } else {
                         // This means the count was broken somewhere in between
                     }
 
                     startIndex+=i;
-                    while (numberList[startIndex+1] != null) { startIndex++ }
+                    while (messagePossibleValues[startIndex+1].length > 0) { startIndex++ }
                     break;
                 }
 //
@@ -142,6 +140,16 @@ function fillByInterpolation(numberList) {
             startIndex++;
         }
     }
+
+    // Filter out impossible values. TODO: Improve
+    for (let i = 0; i<messagePossibleValues.length; i++) {
+        messagePossibleValues[i] = new Set([...messagePossibleValues[i]].filter(val => val < 1000));
+        if (i > 0 && i < messagePossibleValues.length-1 && messagePossibleValues[i-1].length > 0 && messagePossibleValues[i+1].length > 0) {
+            messagePossibleValues[i] = new Set([...messagePossibleValues[i]].filter(val => messagePossibleValues[i-1].includes(val-1) && messagePossibleValues[i+1].includes(val+1)));
+        }
+    }
+
+    return messagePossibleValues.map(s => s.values().next().value);
 }
 
 /**
@@ -152,7 +160,5 @@ function fillByInterpolation(numberList) {
 exports.crawlAll = (async function(channel) {
     const messages = await retrieveMessages(channel);
     const assignedNumbers = assignNumbers(messages);
-    const numbers = Object.entries(assignedNumbers).sort((a,b) => a[0].localeCompare(b[0])).map(e => e[1]); // Sort numbers by the message id (chronological order) and remove the message ID afterwards (only keep numbers)
-    fillByInterpolation(numbers); // Fill in as many missing numbers as possible
-    return {messages: messages, numbers: numbers};
+    return {messages: messages, numbers: assignedNumbers};
 });

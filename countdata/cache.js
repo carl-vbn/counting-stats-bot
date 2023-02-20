@@ -17,6 +17,15 @@ async function loadCache(channelId) {
     }
 }
 
+function prepareAttachmentsForCaching(attachments) {
+    const attachmentList = [];
+    for (const attachment of attachments) {
+        attachmentList.push([attachment[0], {url: attachment[1].url}])
+    }
+
+    return attachmentList;
+}
+
 /**
  * @param {string} channelId 
  * @param {Message[]} messages 
@@ -29,15 +38,13 @@ async function cacheMessages(channelId, messages) {
     cachingPromise = fs.writeFile(cacheFile, JSON.stringify(messages.map(msg => (
         {
             id: msg.id,
+            createdTimestamp: msg.createdTimestamp,
             author: {
                 id: msg.author?.id,
                 username: msg.author?.username
             },
             content: msg.content,
-            attachments: msg.attachments ? msg.attachments.map(a => ({
-                id: a.id,
-                url: a.url
-            })) : []
+            attachments: prepareAttachmentsForCaching(msg.attachments)
         }
     ) )));
 

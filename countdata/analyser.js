@@ -20,22 +20,28 @@ function getMostActiveCounters(messages) {
 
 function getHighestNumber(numbers) {
     let max = 0;
-    for (const n of numbers) {
-        if (n > max) max = n;
+    for (let i = 0; i<numbers.length; i++) {
+        const n = numbers[i];
+        if (n != undefined && n > max && (i == 0 || numbers[i-1] == undefined || numbers[i-1] == n-1)) max = n;
     }
 
     return max;
 }
 
 function getChainCount(numbers) {
-    let chainCount = 1;
+    let chainCount = 0;
+    let chainSuccesses = 0;
     let nextExpectedNumber = 1;
     for (const n of numbers) {
-        if (n != null && n != nextExpectedNumber) {
-            chainCount++;
-            nextExpectedNumber = n+1;
-        } else {
+        if (n == nextExpectedNumber) {
+            chainSuccesses++;
+            if (chainSuccesses == 2) chainCount++;
             nextExpectedNumber++;
+        } else if (n == undefined) {
+            nextExpectedNumber++;
+        } else {
+            nextExpectedNumber = n+1;
+            chainSuccesses = 0;
         }
     }
 
