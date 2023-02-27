@@ -15,10 +15,8 @@ module.exports = {
     async execute(interaction) {
         if (global.config[interaction.guild.id].hasOwnProperty('countingChannel')) {
             const channel = await interaction.guild.channels.fetch(global.config[interaction.guild.id].countingChannel);
-            const {messages, numbers} = await crawler.crawlAll(channel);
-            const mostActiveCounters = analyser.getMostActiveCounters(messages);
-            const highestNumber = analyser.getHighestNumber(numbers);
-            const chainCount = analyser.getChainCount(numbers);
+            const messages = await crawler.crawlAll(channel);
+            const stats = analyser.analyze(messages, channel.id, 50);
 
             const statsEmbed = new EmbedBuilder()
             .setColor(0x0099FF)
@@ -28,9 +26,9 @@ module.exports = {
             .setThumbnail('https://cdn.discordapp.com/icons/869050227397656586/574ebb413d3da02b1cae268e4e54fa71.webp')
             .addFields(
                 { name: 'Number of messages', value: `${messages.length}` },
-                { name: 'Highest number', value: `${highestNumber}` },
-                { name: 'Number of attempts', value: `${chainCount}` },
-                { name: 'Most active counters', value: mostActiveCounters.slice(0, 10).map(mac => `- ${mac[0]} (${mac[1]} messages)`).join('\n') }
+                { name: 'Highest number', value: `${stats.highestNumber}` },
+                { name: 'Number of attempts', value: `${stats.chainCount}` },
+                { name: 'Most active counters', value: stats.mostActiveCounters.slice(0, 10).map(mac => `- ${mac[0]} (${mac[1]} messages)`).join('\n') }
             )
             .setTimestamp()
             .setFooter({ text: 'Requested by '+interaction.user.username, iconURL: interaction.user.avatarURL() });
