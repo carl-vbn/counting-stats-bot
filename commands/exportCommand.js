@@ -6,7 +6,7 @@ const crawler = require('../countdata/crawler');
 module.exports = {
     data: new SlashCommandBuilder()
         .setName('export')
-        .setDescription('Show counting stats'),
+        .setDescription('Export counting stats'),
 
     /**
      * 
@@ -16,7 +16,7 @@ module.exports = {
         if (global.config[interaction.guild.id].hasOwnProperty('countingChannel')) {
             const channel = await interaction.guild.channels.fetch(global.config[interaction.guild.id].countingChannel);
             const messages = await crawler.crawlAll(channel);
-            const stats = analyser.analyze(messages, channel.id, 50);
+            const stats = analyser.analyze(messages, channel.id, 50, true);
 
             const datedNumbers = {};
             for (const [messageId, number] of Object.entries(stats.assignedNumbers)) {

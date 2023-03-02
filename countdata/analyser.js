@@ -109,7 +109,7 @@ function shouldIgnoreMessage(message, channelId) {
     return false;
 }
 
-function analyze(messages, channelId, maxUnsureDistance) {
+function analyze(messages, channelId, maxUnsureDistance, dontIgnore=false) {
     messages = messages.sort((a,b) => a.createdTimestamp - b.createdTimestamp);
 
     const assignedNumbers = {};
@@ -119,7 +119,7 @@ function analyze(messages, channelId, maxUnsureDistance) {
     let cursor = messages.length-1;
 
     while (cursor > 0) {
-        if (shouldIgnoreMessage(messages[cursor], channelId)) {
+        if (!dontIgnore && shouldIgnoreMessage(messages[cursor], channelId)) {
             cursor--;
             continue;
         }
