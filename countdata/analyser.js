@@ -109,6 +109,11 @@ function shouldIgnoreMessage(message, channelId) {
     return false;
 }
 
+function findFirstMiscount(messages) {
+    console.log("There must be a miscount in the following messages");
+    console.log(messages);
+}
+
 function analyze(messages, channelId, maxUnsureDistance) {
     messages = messages.sort((a,b) => a.createdTimestamp - b.createdTimestamp);
 
@@ -117,6 +122,7 @@ function analyze(messages, channelId, maxUnsureDistance) {
     let highestNumber = 0;
 
     let cursor = messages.length-1;
+    let nextChainStartIndex;
 
     while (cursor > 0) {
         if (shouldIgnoreMessage(messages[cursor], channelId)) {
@@ -127,16 +133,21 @@ function analyze(messages, channelId, maxUnsureDistance) {
         for (const possibleValue of findPossibleValues(messages[cursor])) {
             let successfulMatches = 0;
             for (let offset = 1; offset <= maxUnsureDistance && cursor-offset >= 0; offset++) {
-                // console.log(`${findPossibleValues(messages[cursor-offset])} vs ${possibleValue}-${offset}`);
                 if (findPossibleValues(messages[cursor-offset]).includes(possibleValue-offset)) successfulMatches++;
             }
 
-            if (successfulMatches >= 2) {
+            if (successfulMatches > 2) {
+                if (nextChainStartIndex != undefined) {
+                    findFirstMiscount(messages.slice(cursor, nextChainStartIndex));
+                }
+
                 for (let offset = 0; offset < possibleValue && cursor-offset >= 0; offset++) {
                     const number = possibleValue - offset;
                     assignedNumbers[messages[cursor-offset].id] = number;
                     if (number > highestNumber) highestNumber = number;
                 }
+
+                nextChainStartIndex = cursor-(possibleValue-1);
 
                 chainCount++;
                 cursor -= (possibleValue - 1);
