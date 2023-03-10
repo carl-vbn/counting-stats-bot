@@ -118,6 +118,7 @@ function analyze(messages, channelId, maxUnsureDistance) {
     messages = messages.sort((a,b) => a.createdTimestamp - b.createdTimestamp);
 
     const assignedNumbers = {};
+
     let chainCount = 0;
     let highestNumber = 0;
 
@@ -159,7 +160,16 @@ function analyze(messages, channelId, maxUnsureDistance) {
         cursor--;
     }
 
-    return {assignedNumbers: assignedNumbers, chainCount: chainCount, highestNumber: highestNumber, mostActiveCounters: getMostActiveCounters(messages)};
+    const timedNumbers = {};
+    for (const [messageId, number] of Object.entries(assignedNumbers)) {
+        for (const message of messages) {
+            if (message.id == messageId) {
+                timedNumbers[message.createdTimestamp] = number;
+            }
+        }
+    }
+
+    return {assignedNumbers: assignedNumbers, chainCount: chainCount, highestNumber: highestNumber, mostActiveCounters: getMostActiveCounters(messages), timedNumbers: timedNumbers};
 }
 
 exports.analyze = analyze;

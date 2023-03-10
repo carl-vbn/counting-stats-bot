@@ -57,7 +57,10 @@ module.exports = {
             .setTimestamp()
             .setFooter({ text: 'Requested by '+interaction.user.username, iconURL: interaction.user.avatarURL() });
             
-            grapher.createChart(null);
+            console.log("Creating graph...");
+            const preTime = Date.now();
+            grapher.createGraph(stats.timedNumbers, 'cache/graph_'+channel.id+".png");
+            console.log("Graph generation took "+(Date.now()-preTime)+" ms.");
 
             try {await interaction.reply({embeds: [statsEmbed], ephemeral: interaction.user.username == 'NamePointer'}); } catch (err) { console.error(err); }
         } else {
