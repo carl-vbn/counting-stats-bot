@@ -138,7 +138,7 @@ function analyze(messages, channelId, maxUnsureDistance) {
 
             if (successfulMatches > 2) {
                 if (nextChainStartIndex != undefined) {
-                    findFirstMiscount(messages.slice(cursor, nextChainStartIndex));
+                    //findFirstMiscount(messages.slice(cursor, nextChainStartIndex));
                 }
 
                 for (let offset = 0; offset < possibleValue && cursor-offset >= 0; offset++) {

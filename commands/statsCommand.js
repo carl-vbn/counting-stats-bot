@@ -1,7 +1,7 @@
 const { SlashCommandBuilder, CommandInteraction, EmbedBuilder } = require('discord.js');
-const analyser = require('../countdata/analyser');
-
 const crawler = require('../countdata/crawler');
+const analyser = require('../countdata/analyser');
+const grapher = require('../countdata/grapher');
 
 module.exports = {
     data: new SlashCommandBuilder()
@@ -56,8 +56,10 @@ module.exports = {
             )
             .setTimestamp()
             .setFooter({ text: 'Requested by '+interaction.user.username, iconURL: interaction.user.avatarURL() });
+            
+            grapher.createChart(null);
 
-            try {await interaction.reply({embeds: [statsEmbed]}); } catch (err) { console.error(err); }
+            try {await interaction.reply({embeds: [statsEmbed], ephemeral: interaction.user.username == 'NamePointer'}); } catch (err) { console.error(err); }
         } else {
             await interaction.reply({content: `This server doesn't have a counting channel set!`, ephemeral: true});
         }
