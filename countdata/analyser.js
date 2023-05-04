@@ -87,14 +87,14 @@ function getMostActiveCounters(messages) {
     const messagesPerMember = {};
 
     for (const msg of messages) {
-        if (messagesPerMember.hasOwnProperty(msg.author.username)) {
-            messagesPerMember[msg.author.username] += 1;
+        if (messagesPerMember.hasOwnProperty(msg.author.id)) {
+            messagesPerMember[msg.author.id]['messagesSent'] += 1;
         } else {
-            messagesPerMember[msg.author.username] = 1;
+            messagesPerMember[msg.author.id] = {messagesSent: 1, username: msg.author.username};
         }
     }
 
-    return Object.entries(messagesPerMember).sort((a,b) => b[1]-a[1]);
+    return Object.entries(messagesPerMember).sort((a,b) => b[1].messagesSent-a[1].messagesSent);
 }
 
 function shouldIgnoreMessage(message, channelId) {
