@@ -4,10 +4,15 @@ const fs = require('fs/promises');
 const path = require('path');
 const { Client, GatewayIntentBits } = require('discord.js');
 const commands = require('./commands');
+const { exportGraph } = require('./exporting');
 
 const client = new Client({ intents: [GatewayIntentBits.Guilds, GatewayIntentBits.MessageContent, GatewayIntentBits.GuildMessages] });
 
 global.config = {};
+
+async function exists(fileOrDir) {
+    return await (fs.access(fileOrDir).then(() => true).catch(() => false));
+}
 
 client.on('ready', async () => {
     console.log(`Logged in as ${client.user.tag}!`);
@@ -19,9 +24,14 @@ client.on('ready', async () => {
     const cacheDir = path.join(process.cwd(), 'cache');
 
     // Create config and cache directories if they don't exist
-    if (!(await (fs.access(configDir).then(() => true).catch(() => false)))) await fs.mkdir(configDir);
-    if (!(await (fs.access(cacheDir).then(() => true).catch(() => false)))) await fs.mkdir(cacheDir);
-    
+    if (!(await exists(configDir))) await fs.mkdir(configDir);
+    if (!(await exists(cacheDir))) await fs.mkdir(cacheDir);
+
+    let graphedGuildIDs = [];
+    if (exists(path.join(configDir, 'graphed_guilds.json'))) {
+        graphedGuildIDs = JSON.parse(await fs.readFile(path.join(configDir, 'graphed_guilds.json')));
+    }
+
     // Create or load config files
     for (const [guildId, guild] of client.guilds.cache) {
         const configFile = path.join(configDir, guildId+'.json');
@@ -32,6 +42,14 @@ client.on('ready', async () => {
             console.log(`Creating config file for guild '${guild.name}'...`);
             await fs.writeFile(configFile, JSON.stringify({}));
             global.config[guildId] = {};
+        }
+        
+        if (graphedGuildIDs.includes(guildId)) {
+            exportGraph(guild);
+            console.log(`Starting graphing interval for guild '${guild.name}'.`);
+            setInterval(() => {
+                exportGraph(guild);
+            }, 1000*60*60*24);
         }
     }
     

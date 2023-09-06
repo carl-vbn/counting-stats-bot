@@ -1,6 +1,7 @@
 from PIL import Image, ImageDraw, ImageFont
 import colorsys
 from datetime import datetime
+from random import choice
 
 # Properties
 CURVE_LINE_WIDTH = 2
@@ -17,6 +18,7 @@ MONTHS = ["", "Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oc
 DAYS_IN_MONTH = [0, 31, 28, 31, 30, 31, 30, 31, 31, 30 ,31, 30, 31]
 DAY_LENGTH_MS = 24 * 60 * 60 * 1000
 MONTH_LENGTH_MS = int(30.5 * 24 * 60 * 60 * 1000)
+GRAPH_COLORS = [(255, 0, 100), (0, 255, 100), (0, 100, 255), (255, 0, 255), (0, 200, 255), (255, 100, 0)]
 
 def lerp(a, b, t):
     return a + (b - a) * t
@@ -152,7 +154,6 @@ def generate_image(curve, width, height, padding, color):
     milliseconds_per_pixel = (curve.points[-1][0] - curve.points[0][0]) / (width - 2 * padding)
     offset_pixels = int(offset / milliseconds_per_pixel)
     month_width_pixels = int(month_width_pixels)
-    print(first_timestamp, offset, offset_pixels)
     
     # Draw curve and gradient
     for x in range(padding+1, width-padding+1):
@@ -179,13 +180,12 @@ def generate_image(curve, width, height, padding, color):
 
     draw = ImageDraw.Draw(img)
 
-    # Draw minimum y value
+    # Draw y values
     min_y = curve.get_min()
-    draw.text((padding - 10, height - padding), str(min_y), (255, 255, 255), font=VALUE_FONT, align="right", anchor="rb")
-
-    # Draw maximum y value
     max_y = curve.get_max()
-    draw.text((padding - 10, padding), str(max_y), (255, 255, 255), font=VALUE_FONT, align="right", anchor="rt")
+    for y in range(padding, height - padding + 1):
+        if y % 100 == padding:
+            draw.text((padding - 10, y), str(int(lerp(min_y, max_y, inv_lerp(height - padding, padding, y)))), (255, 255, 255), font=VALUE_FONT, align="right", anchor="rm")
 
     # Draw months on x axis
 
@@ -210,11 +210,11 @@ def generate_image(curve, width, height, padding, color):
             
     return img
 
-def test():
-    curve = load_curve("counting3.csv", ",")
+def run():
+    curve = load_curve("data.csv", ",")
     curve.fix_min_y(0)
     curve.fix_max_y(1000)
-    img = generate_image(curve, 2000, 500, 50, (255, 0, 0))
+    img = generate_image(curve, 2000, 500, 50, choice(GRAPH_COLORS))
     img.save("graph.png")
 
-test()
+run()

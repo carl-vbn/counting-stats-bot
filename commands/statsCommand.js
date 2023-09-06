@@ -55,9 +55,10 @@ module.exports = {
                 { name: 'Your personal stats', value: `- Messages sent: ${personalMessagesSent}${personalMessagesSent > 0 ? '\n- Rank: #'+personalRank : ''}\n- Highest number: ${personalHighestNumber}`}
             )
             .setTimestamp()
+            .setImage('attachment://graph.png')
             .setFooter({ text: 'Requested by '+interaction.user.username, iconURL: interaction.user.avatarURL() });
 
-            try {await interaction.reply({embeds: [statsEmbed]}); } catch (err) { console.error(err); }
+            try {await interaction.reply({embeds: [statsEmbed], files: ['./graph.png']}); } catch (err) { console.error(err); }
         } else {
             await interaction.reply({content: `This server doesn't have a counting channel set!`, ephemeral: true});
         }

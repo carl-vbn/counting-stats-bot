@@ -58,7 +58,6 @@ exports.register = async function (client) {
 
     // registerCommand('configCommand.js');
     registerCommand('statsCommand.js');
-    registerCommand('exportCommand.js');
 
     refreshSlashCommands();
 }
