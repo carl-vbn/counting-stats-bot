@@ -52,7 +52,7 @@ module.exports = {
                 { name: 'Highest number', value: `${stats.highestNumber}` },
                 { name: 'Number of attempts', value: `${stats.chainCount}` },
                 { name: 'Most active counters', value: stats.mostActiveCounters.slice(0, 10).map(mac => `- ${mac[1].username} (${mac[1].messagesSent} messages)`).join('\n') },
-                { name: 'Your personal stats', value: `- Messages sent: ${personalMessagesSent}${personalMessagesSent > 0 ? '\n- Rank: #'+personalRank : ''}\n-Highest number: ${personalHighestNumber}`}
+                { name: 'Your personal stats', value: `- Messages sent: ${personalMessagesSent}${personalMessagesSent > 0 ? '\n- Rank: #'+personalRank : ''}\n- Highest number: ${personalHighestNumber}`}
             )
             .setTimestamp()
             .setFooter({ text: 'Requested by '+interaction.user.username, iconURL: interaction.user.avatarURL() });
