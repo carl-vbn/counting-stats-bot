@@ -2,7 +2,7 @@ require('dotenv').config();
 
 const fs = require('fs/promises');
 const path = require('path');
-const { Client, GatewayIntentBits } = require('discord.js');
+const { Client, GatewayIntentBits, ActivityType } = require('discord.js');
 const commands = require('./commands');
 const { exportGraph } = require('./exporting');
 
@@ -16,6 +16,7 @@ async function exists(fileOrDir) {
 
 client.on('ready', async () => {
     console.log(`Logged in as ${client.user.tag}!`);
+    client.user.setActivity('you mess up the count', {type:ActivityType.Watching});
     
     await client.guilds.fetch();
     console.log(`Bot is in ${client.guilds.cache.size} guild(s).`);
