@@ -115,6 +115,7 @@ function analyze(messages, channelId, maxUnsureDistance, dontIgnore=false) {
     const assignedNumbers = {};
     let chainCount = 0;
     let highestNumber = 0;
+    let onethousandMessage = null;
 
     let cursor = messages.length-1;
 
@@ -135,6 +136,9 @@ function analyze(messages, channelId, maxUnsureDistance, dontIgnore=false) {
                 for (let offset = 0; offset < possibleValue && cursor-offset >= 0; offset++) {
                     const number = possibleValue - offset;
                     assignedNumbers[messages[cursor-offset].id] = number;
+
+                    if (number == 1000) onethousandMessage = messages[cursor-offset];
+
                     if (number > highestNumber) highestNumber = number;
                 }
 
@@ -148,7 +152,7 @@ function analyze(messages, channelId, maxUnsureDistance, dontIgnore=false) {
         cursor--;
     }
 
-    return {assignedNumbers: assignedNumbers, chainCount: chainCount, highestNumber: highestNumber, mostActiveCounters: getMostActiveCounters(messages)};
+    return {assignedNumbers: assignedNumbers, chainCount: chainCount, highestNumber: highestNumber, mostActiveCounters: getMostActiveCounters(messages), onethousandMessage: onethousandMessage};
 }
 
 exports.analyze = analyze;

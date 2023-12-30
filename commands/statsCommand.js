@@ -50,6 +50,7 @@ module.exports = {
             .addFields(
                 { name: 'Number of messages', value: `${messages.length}` },
                 { name: 'Highest number', value: `${stats.highestNumber}` },
+                { name: '1000 reached', value: stats.onethousandMessage ? `<t:${Math.floor(stats.onethousandMessage.createdTimestamp / 1000)}>` : `Not yet` },
                 { name: 'Number of attempts', value: `${stats.chainCount}` },
                 { name: 'Most active counters', value: stats.mostActiveCounters.slice(0, 10).map(mac => `- ${mac[1].username} (${mac[1].messagesSent} messages)`).join('\n') },
                 { name: 'Your personal stats', value: `- Messages sent: ${personalMessagesSent}${personalMessagesSent > 0 ? '\n- Rank: #'+personalRank : ''}\n- Highest number: ${personalHighestNumber}`}

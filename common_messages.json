@@ -16,5 +16,7 @@
     "benedict.*cumberbatch": 1,
     "958111004162674708/1074820940157964318/image0.gif": 1,
     "doctor.*strange": 1,
-    "dr.*strange": 1
+    "dr.*strange": 1,
+    "^1002 scrub$": 1002,
+    "^1003": 1003
 }

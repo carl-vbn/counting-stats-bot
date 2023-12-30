@@ -90,7 +90,7 @@ def load_curve(filename, separator):
             points.append((float(x), float(y)))
         return Curve(points)
 
-def generate_image(curve, width, height, padding, color):
+def generate_image(curve, width, height, padding):
     '''Generates an image of a curve
     curve is a Curve object
     width and height are the dimensions of the image
@@ -101,12 +101,13 @@ def generate_image(curve, width, height, padding, color):
     img = Image.new("RGB", (width, height), (0,0,0))
     pixels = img.load()
 
-    curve_color_hsv = colorsys.rgb_to_hsv(color[0] / 255, color[1] / 255, color[2] / 255)
-    background_color_a = (curve_color_hsv[0], curve_color_hsv[1] * 0.9, curve_color_hsv[2] * 0.3)
-    background_color_b = ((curve_color_hsv[0]+0.01)%1, curve_color_hsv[1] * 0.9, curve_color_hsv[2] * 0.1)
+    # curve_color_hsv = colorsys.rgb_to_hsv(color[0] / 255, color[1] / 255, color[2] / 255)
     def get_background_color(x, y, on_grid_line=False):
         t = y / height
 
+        curve_color_hsv = (x / width, 1.0, 1.0)
+        background_color_a = (curve_color_hsv[0], curve_color_hsv[1] * 0.9, curve_color_hsv[2] * 0.3)
+        background_color_b = ((curve_color_hsv[0]+0.01)%1, curve_color_hsv[1] * 0.9, curve_color_hsv[2] * 0.1)
 
         hsv_color = lerp3d(background_color_a, background_color_b, t)
 
@@ -127,6 +128,8 @@ def generate_image(curve, width, height, padding, color):
             for x_offset in range(-line_width // 2, line_width // 2 + 1):
                 for y_offset in range(-line_width // 2, line_width // 2 + 1):
                     if 0 <= x + x_offset < width and 0 <= y + y_offset < height:
+                        if color is None:
+                            color = tuple(int(x*255) for x in colorsys.hsv_to_rgb(x / width, 1.0, 1.0))
                         pixels[x + x_offset, y + y_offset] = color
 
     # Draw background to the left of the curve
@@ -163,6 +166,8 @@ def generate_image(curve, width, height, padding, color):
         curve_y = height - lerp(padding, height - padding, curve.get_curve_height(t))
         previous_curve_y = height - lerp(padding, height - padding, curve.get_curve_height(previous_t))
 
+        color = tuple(int(x*255) for x in colorsys.hsv_to_rgb(x / width, 1.0, 1.0))
+
         # Draw gradient below the curve and background
         for y in range(height):
             on_grid_line = padding < y < height-padding and (y % 100 == padding or x % month_width_pixels == padding + offset_pixels)
@@ -172,7 +177,7 @@ def generate_image(curve, width, height, padding, color):
                 pixels[x, y] = get_background_color(x, y, on_grid_line)
 
         # Draw curve
-        draw_line((x, curve_y), (x - 1, previous_curve_y), color, CURVE_LINE_WIDTH)
+        draw_line((x, curve_y), (x - 1, previous_curve_y), None, CURVE_LINE_WIDTH)
 
     # Draw axes
     draw_line((padding, height - padding), (width - padding, height - padding), (255, 255, 255), AXIS_LINE_WIDTH)
@@ -214,7 +219,7 @@ def run():
     curve = load_curve("data.csv", ",")
     curve.fix_min_y(0)
     curve.fix_max_y(1000)
-    img = generate_image(curve, 2000, 500, 50, choice(GRAPH_COLORS))
+    img = generate_image(curve, 2000, 500, 50) #, choice(GRAPH_COLORS))
     img.save("graph.png")
 
 run()
