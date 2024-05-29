@@ -5,10 +5,10 @@ const crawler = require('./countdata/crawler');
 const spawn = require('child_process').spawn;
 
 module.exports = {
-    async exportGraph(guild) {
-        console.log(`[${Date.now()}] Exporting stats for guild ${guild.name} (${guild.id})`);
-        if (global.config[guild.id].hasOwnProperty('countingChannel')) {
-            const channel = await guild.channels.fetch(global.config[guild.id].countingChannel);
+    async exportGraph(guild, channelType) {
+        console.log(`[${Date.now()}] Exporting stats of ${channelType} for guild ${guild.name} (${guild.id})`);
+        if (global.config[guild.id].hasOwnProperty(channelType)) {
+            const channel = await guild.channels.fetch(global.config[guild.id][channelType]);
             const messages = await crawler.crawlAll(channel);
             const stats = analyser.analyze(messages, channel.id, 50, true);
 
@@ -25,10 +25,10 @@ module.exports = {
             const csv = Object.entries(datedNumbers).map(([date, number]) => `${date},${number}`).join('\n');
 
             console.log(`Writing data to file...`);
-            await fs.writeFile('data.csv', csv);
+            await fs.writeFile(`data_${channelType}.csv`, csv);
 
             console.log(`Running grapher...`);
-            const grapherProc = spawn('python', ['grapher.py']);
+            const grapherProc = spawn('python3', ['grapher.py', channelType]);
             grapherProc.on('close', (code) => {
                 console.log(`[${Date.now()}] Grapher exited with code ${code}`);
                 if (code != 0) {

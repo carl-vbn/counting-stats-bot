@@ -46,10 +46,12 @@ client.on('ready', async () => {
         }
         
         if (graphedGuildIDs.includes(guildId)) {
-            exportGraph(guild);
+            exportGraph(guild, 'countingChannel');
+	    exportGraph(guild, 'originalCountingChannel');
             console.log(`Starting graphing interval for guild '${guild.name}'.`);
             setInterval(() => {
-                exportGraph(guild);
+                exportGraph(guild, 'countingChannel');
+		exportGraph(guild, 'originalCountingChannel');
             }, 1000*60*60*24);
         }
     }

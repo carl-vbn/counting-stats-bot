@@ -6,15 +6,24 @@ const crawler = require('../countdata/crawler');
 module.exports = {
     data: new SlashCommandBuilder()
         .setName('counting-stats')
-        .setDescription('Show counting stats'),
+        .setDescription('Show counting stats')
+	.addStringOption(option =>
+		option.setName('channel')
+			.setDescription('The counting channel to use')
+			.setRequired(false)
+			.addChoices(
+				{ name: 'Original', value: 'original' },
+				{ name: 'Reincarnated', value: 'new' },
+			)),
 
     /**
      * 
      * @param {CommandInteraction} interaction 
      */
     async execute(interaction) {
-        if (global.config[interaction.guild.id].hasOwnProperty('countingChannel')) {
-            const channel = await interaction.guild.channels.fetch(global.config[interaction.guild.id].countingChannel);
+	const channelType = (interaction.options.getString('channel') ?? 'new') == 'new' ? 'countingChannel' : 'originalCountingChannel';
+        if (global.config[interaction.guild.id][channelType]) {
+            const channel = await interaction.guild.channels.fetch(global.config[interaction.guild.id][channelType]);
             const messages = await crawler.crawlAll(channel);
             const stats = analyser.analyze(messages, channel.id, 50);
 
@@ -56,10 +65,10 @@ module.exports = {
                 { name: 'Your personal stats', value: `- Messages sent: ${personalMessagesSent}${personalMessagesSent > 0 ? '\n- Rank: #'+personalRank : ''}\n- Highest number: ${personalHighestNumber}`}
             )
             .setTimestamp()
-            .setImage('attachment://graph.png')
+            .setImage(`attachment://graph_${channelType}.png`)
             .setFooter({ text: 'Requested by '+interaction.user.username, iconURL: interaction.user.avatarURL() });
 
-            try {await interaction.reply({embeds: [statsEmbed], files: ['./graph.png']}); } catch (err) { console.error(err); }
+            try {await interaction.reply({embeds: [statsEmbed], files: [`./graph_${channelType}.png`]}); } catch (err) { console.error(err); }
         } else {
             await interaction.reply({content: `This server doesn't have a counting channel set!`, ephemeral: true});
         }
