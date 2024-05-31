@@ -1,6 +1,5 @@
 const { SlashCommandBuilder, CommandInteraction, EmbedBuilder } = require('discord.js');
 const analyser = require('../countdata/analyser');
-
 const crawler = require('../countdata/crawler');
 
 module.exports = {
@@ -71,8 +70,7 @@ module.exports = {
             .setColor(0x0099FF)
             .setTitle('Counting stats')
             .setURL('https://www.wikicu.com/Counting')
-            .setDescription('Latest counting statistics')
-            .setThumbnail('https://cdn.discordapp.com/icons/869050227397656586/574ebb413d3da02b1cae268e4e54fa71.webp')
+            .setDescription(`Latest counting statistics for <#${channel.id}>`)
             .addFields(
                 { name: 'Number of messages', value: `${messages.length}` },
                 { name: 'Highest number', value: `${stats.highestNumber}` },
@@ -90,8 +88,9 @@ module.exports = {
 
             try {
                 await interaction.reply({
-                embeds: [statsEmbed],
-                files: attachmentName != null ? [`exports/${attachmentName}`] : []}); 
+                    embeds: [statsEmbed],
+                    files: attachmentName != null ? [`exports/${attachmentName}`] : []
+                }); 
             } catch (err) { console.error(err); }
         } else {
             await interaction.reply({content: `This server doesn't have a counting channel set!`, ephemeral: true});

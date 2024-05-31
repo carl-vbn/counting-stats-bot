@@ -1,4 +1,5 @@
 const { Message, GuildMember } = require('discord.js');
+const { findMiscount } = require('../openai');
 
 const commonMessageDict = require('../common_messages.json');
 const ignoredTimeranges = require('../ignored_timeranges.json');
@@ -155,4 +156,38 @@ function analyze(messages, channelId, maxUnsureDistance, dontIgnore=false) {
     return {assignedNumbers: assignedNumbers, chainCount: chainCount, highestNumber: highestNumber, mostActiveCounters: getMostActiveCounters(messages), onethousandMessage: onethousandMessage};
 }
 
+async function findMiscounts(messages, assignedNumbers) {
+    console.log('Finding miscounts...');
+    const miscounts = new Set();
+    const examinedMessageIds = new Set();
+
+    for (let i = 0; i < messages.length; i++) {
+        const msg = messages[i];
+        if (assignedNumbers.hasOwnProperty(msg.id) || examinedMessageIds.has(msg.id)) continue;
+        
+        const surroundingMessages = [];
+        for (let j = -5; j <= 5; j++) {
+            if (i+j < 0 || i+j >= messages.length) continue;
+            const surroundingMsg = messages[i+j];
+            examinedMessageIds.add(surroundingMsg.id);
+            surroundingMessages.push(surroundingMsg);
+        }
+
+        const miscountIndex = await findMiscount(surroundingMessages.map(msg => msg.content));
+        if (miscountIndex !== null) {
+            miscounts.add(surroundingMessages[miscountIndex]);
+        }
+        for (let j = 0; j < surroundingMessages.length; j++) {
+            if (j == miscountIndex) {
+                console.log(`[X] ${surroundingMessages[j].content}`);
+            } else {
+                console.log(`[ ] ${surroundingMessages[j].content}`);
+            }
+        }
+    }
+
+    return miscounts;
+}
+
 exports.analyze = analyze;
+exports.findMiscounts = findMiscounts;
