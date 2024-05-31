@@ -7,14 +7,23 @@ module.exports = {
     data: new SlashCommandBuilder()
         .setName('counting-stats')
         .setDescription('Show counting stats')
-	.addStringOption(option =>
-		option.setName('channel')
+	    .addStringOption(option =>
+		    option.setName('channel')
 			.setDescription('The counting channel to use')
 			.setRequired(false)
 			.addChoices(
 				{ name: 'Original', value: 'original' },
 				{ name: 'Reincarnated', value: 'new' },
-			)),
+			))
+        .addStringOption(option =>
+            option.setName('chart')
+            .setDescription('The type of chart to display')
+            .setRequired(false)
+            .addChoices(
+                { name: 'Count over time', value: 'curve' },
+                { name: 'Top counters', value: 'pie' },
+                { name: 'None', value: 'none' }
+            )),
 
     /**
      * 
@@ -48,7 +57,15 @@ module.exports = {
                     }
                 }
             }
-
+            
+            let attachmentName = null;
+            if (!interaction.options.getString('chart')) {
+                attachmentName = Math.random() > 0.5 ? `curve_${channelType}.png` : `pie_${channelType}.png`;
+            } else if (interaction.options.getString('chart') == 'curve') {
+                attachmentName = `curve_${channelType}.png`;
+            } else if (interaction.options.getString('chart') == 'pie') {
+                attachmentName = `pie_${channelType}.png`;
+            }
 
             const statsEmbed = new EmbedBuilder()
             .setColor(0x0099FF)
@@ -65,10 +82,17 @@ module.exports = {
                 { name: 'Your personal stats', value: `- Messages sent: ${personalMessagesSent}${personalMessagesSent > 0 ? '\n- Rank: #'+personalRank : ''}\n- Highest number: ${personalHighestNumber}`}
             )
             .setTimestamp()
-            .setImage(`attachment://graph_${channelType}.png`)
             .setFooter({ text: 'Requested by '+interaction.user.username, iconURL: interaction.user.avatarURL() });
 
-            try {await interaction.reply({embeds: [statsEmbed], files: [`./graph_${channelType}.png`]}); } catch (err) { console.error(err); }
+            if (attachmentName) {
+                statsEmbed.setImage(`attachment://${attachmentName}`);
+            }
+
+            try {
+                await interaction.reply({
+                embeds: [statsEmbed],
+                files: attachmentName != null ? [`exports/${attachmentName}`] : []}); 
+            } catch (err) { console.error(err); }
         } else {
             await interaction.reply({content: `This server doesn't have a counting channel set!`, ephemeral: true});
         }

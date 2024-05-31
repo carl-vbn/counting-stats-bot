@@ -4,7 +4,7 @@ const fs = require('fs/promises');
 const path = require('path');
 const { Client, GatewayIntentBits, ActivityType } = require('discord.js');
 const commands = require('./commands');
-const { exportGraph } = require('./exporting');
+const { exportCharts } = require('./exporting');
 
 const client = new Client({ intents: [GatewayIntentBits.Guilds, GatewayIntentBits.MessageContent, GatewayIntentBits.GuildMessages] });
 
@@ -46,12 +46,12 @@ client.on('ready', async () => {
         }
         
         if (graphedGuildIDs.includes(guildId)) {
-            exportGraph(guild, 'countingChannel');
-	    exportGraph(guild, 'originalCountingChannel');
+            exportCharts(guild, 'countingChannel');
+	    exportCharts(guild, 'originalCountingChannel');
             console.log(`Starting graphing interval for guild '${guild.name}'.`);
             setInterval(() => {
-                exportGraph(guild, 'countingChannel');
-		exportGraph(guild, 'originalCountingChannel');
+                exportCharts(guild, 'countingChannel');
+		exportCharts(guild, 'originalCountingChannel');
             }, 1000*60*60*24);
         }
     }

@@ -129,3 +129,6 @@ dist
 # bot config and cache directories (are automatically generated)
 config/
 cache/
+
+# bot exported data
+exports/

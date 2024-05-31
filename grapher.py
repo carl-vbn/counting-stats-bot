@@ -217,10 +217,10 @@ def generate_image(curve, width, height, padding):
     return img
 
 def run():
-    curve = load_curve(f"data_{sys.argv[1]}.csv", ",")
+    curve = load_curve(sys.argv[1], ",")
     curve.fix_min_y(0)
     curve.fix_max_y(1000)
     img = generate_image(curve, 2000, 500, 50) #, choice(GRAPH_COLORS))
-    img.save(f"graph_{sys.argv[1]}.png")
+    img.save(sys.argv[2])
 
 run()
