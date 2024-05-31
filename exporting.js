@@ -47,7 +47,7 @@ module.exports = {
             await fs.writeFile(pie_data_file, pie_csv);
 
             console.log(`Running 'grapher.py ${curve_data_file} ${curve_output_file}'...`);
-            const grapherProc = spawn('python', ['grapher.py', curve_data_file, curve_output_file ]);
+            const grapherProc = spawn(process.env.PYTHON_EXECUTABLE, ['grapher.py', curve_data_file, curve_output_file ]);
             grapherProc.on('close', (code) => {
                 console.log(`[${Date.now()}] Grapher exited with code ${code}`);
                 if (code != 0) {
@@ -56,7 +56,7 @@ module.exports = {
             });
 
             console.log(`Running 'piechart.py ${pie_data_file} ${pie_output_file}'...`);
-            const piechartProc = spawn('python', ['piechart.py', pie_data_file, pie_output_file ]);
+            const piechartProc = spawn(process.env.PYTHON_EXECUTABLE, ['piechart.py', pie_data_file, pie_output_file ]);
             piechartProc.on('close', (code) => {
                 console.log(`[${Date.now()}] Piechart exited with code ${code}`);
                 if (code != 0) {
