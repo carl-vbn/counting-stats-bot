@@ -4,10 +4,10 @@ const path = require('path');
 
 let cachingPromise = null;
 
-async function loadCache(channelId) {
+async function loadCachedMessage(channelId) {
     if (cachingPromise) await cachingPromise;
 
-    const cacheFile = path.join(process.cwd(), 'cache', channelId+'.json');
+    const cacheFile = path.join(process.cwd(), 'cache', channelId, 'messages.json');
     const cacheExists = await fs.access(cacheFile, fs.constants.F_OK).then(() => true).catch(() => false);
 
     if (cacheExists) {
@@ -33,8 +33,14 @@ function prepareAttachmentsForCaching(attachments) {
 async function cacheMessages(channelId, messages) {
     if (cachingPromise) await cachingPromise;
 
-    const cacheFile = path.join(process.cwd(), 'cache', channelId+'.json');
-    fs.writeFile(path.join(process.cwd(), 'cache', channelId+'.recovery.json'), JSON.stringify(messages));
+    // Create the channelId directory if it doesn't exist
+    const channelCacheDir = path.join(process.cwd(), 'cache', channelId);
+    if (!(await fs.access(channelCacheDir).then(() => true).catch(() => false))) {
+        await fs.mkdir(channelCacheDir);
+    }
+
+    const cacheFile = path.join(channelCacheDir, 'messages.json');
+    fs.writeFile(path.join(channelCacheDir, 'messages.recovery.json'), JSON.stringify(messages));
     cachingPromise = fs.writeFile(cacheFile, JSON.stringify(messages.map(msg => (
         {
             id: msg.id,
@@ -52,5 +58,5 @@ async function cacheMessages(channelId, messages) {
     cachingPromise = null;
 }
 
-exports.loadCache = loadCache;
+exports.loadCachedMessage = loadCachedMessage;
 exports.cacheMessages = cacheMessages;

@@ -1,5 +1,5 @@
 const { Message, GuildMember } = require('discord.js');
-const { findMiscount } = require('../openai');
+const { findMiscount } = require('./openai');
 
 const commonMessageDict = require('../common_messages.json');
 const ignoredTimeranges = require('../ignored_timeranges.json');
@@ -177,13 +177,16 @@ async function findMiscounts(messages, assignedNumbers) {
         if (miscountIndex !== null) {
             miscounts.add(surroundingMessages[miscountIndex]);
         }
+        console.log('=====================');
         for (let j = 0; j < surroundingMessages.length; j++) {
+            const surroundingMsg = surroundingMessages[j];
             if (j == miscountIndex) {
-                console.log(`[X] ${surroundingMessages[j].content}`);
+                console.log(`[X] ${surroundingMsg.content} {${surroundingMsg.id}}`);
             } else {
-                console.log(`[ ] ${surroundingMessages[j].content}`);
+                console.log(`[ ] ${surroundingMsg.content}`);
             }
         }
+        console.log('---------------------');
     }
 
     return miscounts;

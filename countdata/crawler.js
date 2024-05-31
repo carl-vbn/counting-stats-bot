@@ -1,5 +1,5 @@
 const { TextChannel, Message } = require('discord.js');
-const { loadCache, cacheMessages } = require('./cache');
+const { loadCachedMessage, cacheMessages } = require('./cache');
 
 /**
  * @param {TextChannel} channel 
@@ -35,7 +35,7 @@ async function loadAllMessages(channel) {
  * @param {TextChannel} channel 
  */
 async function retrieveMessages(channel, ignoreCache=false) {
-    const cache = ignoreCache ? [] : await loadCache(channel.id);
+    const cache = ignoreCache ? [] : await loadCachedMessage(channel.id);
     if (cache.length == 0) {
         const messages = await loadAllMessages(channel);
         await cacheMessages(channel.id, messages);

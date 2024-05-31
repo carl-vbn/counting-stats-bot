@@ -55,7 +55,7 @@ module.exports = {
             
             let defered = false;
             if (!latestStats[channel.id] || (channelType != 'originalCountingChannel' && Date.now() - latestStats[channel.id].time > 8.64E7)) {
-                await interaction.deferReply();
+                await interaction.deferReply({ephemeral: true});
                 defered = true;
                 latestStats[channel.id] = await genStats(channel);
             }
@@ -77,9 +77,9 @@ module.exports = {
 
             try {
                 if (defered)
-                    await interaction.editReply({embeds: [statsEmbed]}); 
+                    await interaction.editReply({embeds: [statsEmbed], ephemeral: true}); 
                 else 
-                    await interaction.reply({embeds: [statsEmbed]});
+                    await interaction.reply({embeds: [statsEmbed], ephemeral: true});
             } catch (err) { console.error(err); }
         } else {
             await interaction.reply({content: `This server doesn't have a counting channel set!`, ephemeral: true});

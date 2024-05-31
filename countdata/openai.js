@@ -13,7 +13,7 @@ exports.findMiscount = async (msgs) => {
                 "content": [
                     {
                         "type": "text",
-                        "text": "You are given a sequence of messages. Each message designates a number in an ascending sequence, either explicitly or implicitly. Your task is to identify the message that breaks the sequence, and return its index in a JSON object with property \"index\". If no such message is identified, return null. Do not explain your choice."
+                        "text": "You are given a sequence of messages. Each message designates a number in an ascending sequence, either explicitly or implicitly. In some cases, the sequence will contain a message that breaks the ascending order. This can be inferred by the message itself, or the reactions that follow it. Your response should be a json object with two properties: 'miscount' and 'index'. 'miscount' should be a boolean indicating whether a miscount was found. 'index' should be the index of the message that breaks the sequence, or null if no miscount was found. Do not explain your reasoning."
                     }
                 ]
             },
