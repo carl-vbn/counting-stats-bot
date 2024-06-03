@@ -34,7 +34,7 @@ const dummyNames = [
     "Zoe"
 ];
 
-const PROMPT = `What follows is an excerpt from an online chat where the goal is to send numbers in a continuously ascending order. Numbers don't have to be explicitly stated, they can also be send in the form of image links or a reference to the number (usually from web culture). Sometimes, people mess up, either by sending the wrong number, sending a number that has already been sent, or by sending a message that isn't part of the sequence. One person is also not allowed to send more than one message in a row. Your task is to check if such a mistake happened. \n\nA mistake happens if and only if at least one of the following conditions is true:\n- The count restarts from 1\n- Messages show surprise, confusion or disappointment following a mistake\nIf both conditions are not met, you must assume the sequence is correct, even if it is not clear why. If one or both are met, the mistake must have happened BEFORE the first sign of confusion or restart.\n\nYou will reply with a JSON object that has two properties: "miscount", a boolean value set to true if a mistake was detected, and "line", the line number at which the first mistake happened, or null if no mistake happened.\n\n`;
+const PROMPT = `What follows is an excerpt from an online chat where the goal is to send numbers in a continuously ascending order. Numbers don't have to be explicitly stated, they can also be send in the form of image links or a reference to the number (usually from web culture). Sometimes, people mess up, either by sending the wrong number, sending a number that has already been sent, or by sending a message that isn't part of the sequence. One person is also not allowed to send more than one message in a row. Your task is to check if such a mistake happened. \n\nA mistake happens if and only if at least one of the following conditions is true:\n- The count restarts from 1\n- Messages show surprise, confusion or disappointment following a mistake\nIf both conditions are not met, you must assume the sequence is correct, even if it is not clear why. If one or both are met, you must read the messages sent before the confusion or the restart, and determine which one(s) is/are a mistake.\n\nYou will reply with a JSON object that has two properties: "miscount", a boolean value set to true if a mistake was detected, and "line", the line number at which the first mistake happened, or null if no mistake happened.\n\n`;
 
 function formatMessage(msg, index, assignedDummyNames) {
     const authorName = msg.author?.id ? assignedDummyNames[msg.author.id] : 'Unknown';
@@ -106,11 +106,11 @@ exports.findMiscount = async (channelId, msgs) => {
     try {
         const lineStr = JSON.parse(response.choices[0].message.content).line;
         if (lineStr === null || lineStr == 'null') return null;
-        const response = parseInt(lineStr)-1;
+        let responseIndex = parseInt(lineStr)-1;
 
-        await cacheLlmMiscountResponse(channelId, msgs, response);
+        await cacheLlmMiscountResponse(channelId, msgs, responseIndex);
 
-        return response;
+        return responseIndex;
     } catch (e) {
         console.error(e);
         return null;
