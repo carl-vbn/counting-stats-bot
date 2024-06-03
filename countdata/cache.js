@@ -58,5 +58,50 @@ async function cacheMessages(channelId, messages) {
     cachingPromise = null;
 }
 
+async function cacheLlmMiscountResponse(channelId, messages, response) {
+    if (cachingPromise) await cachingPromise;
+
+    const key = `${messages[0].id}-${messages[messages.length-1].id}`;
+
+    // Create the channelId directory if it doesn't exist
+    const channelCacheDir = path.join(process.cwd(), 'cache', channelId);
+    if (!(await fs.access(channelCacheDir).then(() => true).catch(() => false))) {
+        await fs.mkdir(channelCacheDir);
+    }
+
+    const cacheFile = path.join(channelCacheDir, `llm-miscount-responses.json`);
+    
+    // Load existing cache if it exists
+    let cache = {};
+    const cacheExists = await fs.access(cacheFile, fs.constants.F_OK).then(() => true).catch(() => false);
+    if (cacheExists) {
+        cache = JSON.parse(await fs.readFile(cacheFile));
+    }
+
+    cache[key] = response;
+    cachingPromise = fs.writeFile(cacheFile, JSON.stringify(cache));
+
+    await cachingPromise;
+    cachingPromise = null;
+}
+
+async function loadCachedLlmMiscountResponse(channelId, messages) {
+    if (cachingPromise) await cachingPromise;
+
+    const key = `${messages[0].id}-${messages[messages.length-1].id}`;
+
+    const cacheFile = path.join(process.cwd(), 'cache', channelId, `llm-miscount-responses.json`);
+    const cacheExists = await fs.access(cacheFile, fs.constants.F_OK).then(() => true).catch(() => false);
+
+    if (cacheExists) {
+        const cache = JSON.parse(await fs.readFile(cacheFile));
+        return cache[key];
+    } else {
+        return null;
+    }
+}
+
 exports.loadCachedMessage = loadCachedMessage;
 exports.cacheMessages = cacheMessages;
+exports.cacheLlmMiscountResponse = cacheLlmMiscountResponse;
+exports.loadCachedLlmMiscountResponse = loadCachedLlmMiscountResponse;

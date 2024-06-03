@@ -7,11 +7,16 @@ let latestStats = {};
 async function genStats(channel) {
     const messages = await crawler.crawlAll(channel);
     const stats = analyser.analyze(messages, channel.id, 50);
-    const miscounts = await analyser.findMiscounts(messages, stats.assignedNumbers);
+    const miscounts = await analyser.findMiscounts(channel.id, messages, stats.assignedNumbers);
 
     const miscountsPerUser = {};
     const miscounterUsernames = {};
     for (const miscount of miscounts) {
+        if (!miscount.author) {
+            console.log('Miscount without author:', miscount);
+            continue;
+        }
+
         if (!miscountsPerUser[miscount.author.id]) {
             miscountsPerUser[miscount.author.id] = 1;
             miscounterUsernames[miscount.author.id] = miscount.author.username;

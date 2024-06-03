@@ -32,6 +32,7 @@ image = Image.new("RGB", (IMAGE_WIDTH, IMAGE_HEIGHT), (255, 255, 255))
 draw = ImageDraw.Draw(image)
 
 pie_slices = [] # (data_index, start_angle, end_angle)
+
 start_angle = 0
 for i, (_, value) in enumerate(data):
     end_angle = start_angle + value * 2 * pi
@@ -70,7 +71,7 @@ def get_pie_color(x, y):
                 slice = pie_slice
                 break
             
-        if slice[0] is not None:
+        if slice is not None:
             r = sqrt(r2)
             t1 = (r2 - PIE_INNER_RADIUS2) / (PIE_OUTER_RADIUS2 - PIE_INNER_RADIUS2)
             t2 = (a - slice[1]) / (slice[2] - slice[1])

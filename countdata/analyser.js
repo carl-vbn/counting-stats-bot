@@ -156,7 +156,7 @@ function analyze(messages, channelId, maxUnsureDistance, dontIgnore=false) {
     return {assignedNumbers: assignedNumbers, chainCount: chainCount, highestNumber: highestNumber, mostActiveCounters: getMostActiveCounters(messages), onethousandMessage: onethousandMessage};
 }
 
-async function findMiscounts(messages, assignedNumbers) {
+async function findMiscounts(channelId, messages, assignedNumbers) {
     console.log('Finding miscounts...');
     const miscounts = new Set();
     const examinedMessageIds = new Set();
@@ -166,17 +166,22 @@ async function findMiscounts(messages, assignedNumbers) {
         if (assignedNumbers.hasOwnProperty(msg.id) || examinedMessageIds.has(msg.id)) continue;
         
         const surroundingMessages = [];
+        let miscountIndex = null;
         for (let j = -5; j <= 5; j++) {
             if (i+j < 0 || i+j >= messages.length) continue;
             const surroundingMsg = messages[i+j];
+
             examinedMessageIds.add(surroundingMsg.id);
             surroundingMessages.push(surroundingMsg);
+
+            if (miscountIndex === null && !surroundingMsg.content && !surroundingMsg.attachments.some(a => a.url)) {
+                miscountIndex = j + 5;
+            }
         }
 
-        const miscountIndex = await findMiscount(surroundingMessages.map(msg => msg.content));
-        if (miscountIndex !== null) {
-            miscounts.add(surroundingMessages[miscountIndex]);
-        }
+        if (miscountIndex == null) miscountIndex = await findMiscount(channelId, surroundingMessages);
+        if (miscountIndex !== null) miscounts.add(surroundingMessages[miscountIndex]);
+
         console.log('=====================');
         for (let j = 0; j < surroundingMessages.length; j++) {
             const surroundingMsg = surroundingMessages[j];
