@@ -1,6 +1,7 @@
 const { Message, GuildMember } = require('discord.js');
-const { findMiscount } = require('./openai');
 
+const { resolveMessageNumber } = require('./openai');
+const { cacheMessageNumberResolutions, loadCachedMessageNumberResolutions } = require('./cache');
 const commonMessageDict = require('../common_messages.json');
 const ignoredTimeranges = require('../ignored_timeranges.json');
 
@@ -77,6 +78,22 @@ function findPossibleValues(message) {
         if (parenthesisContent.length > 0) possibleValues.push(...findPossibleValues(parenthesisContent));
     }
 
+    let identifiedNumberWord = null;
+    for (const word of messageContent.split(' ')) {
+        let parsed = parseInt(word);
+        if (!isNaN(parsed)) {
+            if (identifiedNumberWord != null) {
+                // There already was a number word, so we can't pick one
+                identifiedNumberWord = null;
+                break;
+            }
+
+            identifiedNumberWord = parsed;
+        }
+    }
+    
+    if (identifiedNumberWord != null) possibleValues.push(identifiedNumberWord);
+            
     return Array.from(new Set(possibleValues));
 }
 
@@ -158,40 +175,44 @@ function analyze(messages, channelId, maxUnsureDistance, dontIgnore=false) {
 
 async function findMiscounts(channelId, messages, assignedNumbers) {
     console.log('Finding miscounts...');
-    const miscounts = new Set();
-    const examinedMessageIds = new Set();
+    const miscounts = [];
 
+    let lastPossibleValues = undefined;
     for (let i = 0; i < messages.length; i++) {
         const msg = messages[i];
-        if (assignedNumbers.hasOwnProperty(msg.id) || examinedMessageIds.has(msg.id)) continue;
-        
-        const surroundingMessages = [];
-        let miscountIndex = null;
-        for (let j = -5; j <= 5; j++) {
-            if (i+j < 0 || i+j >= messages.length) continue;
-            const surroundingMsg = messages[i+j];
+        const assignedNumber = assignedNumbers[msg.id];
 
-            examinedMessageIds.add(surroundingMsg.id);
-            surroundingMessages.push(surroundingMsg);
-
-            if (miscountIndex === null && !surroundingMsg.content && !surroundingMsg.attachments.some(a => a.url)) {
-                miscountIndex = j + 5;
+        if (assignedNumber != undefined) {
+            if (lastPossibleValues == undefined) {
+                lastPossibleValues = [assignedNumber];
+                continue;
             }
-        }
 
-        if (miscountIndex == null) miscountIndex = await findMiscount(channelId, surroundingMessages);
-        if (miscountIndex !== null) miscounts.add(surroundingMessages[miscountIndex]);
-
-        console.log('=====================');
-        for (let j = 0; j < surroundingMessages.length; j++) {
-            const surroundingMsg = surroundingMessages[j];
-            if (j == miscountIndex) {
-                console.log(`[X] ${surroundingMsg.content} {${surroundingMsg.id}}`);
+            if (lastPossibleValues.some(v => v + 1 == assignedNumber)) {
+                lastPossibleValues = [assignedNumber];
+                continue;
             } else {
-                console.log(`[ ] ${surroundingMsg.content}`);
+                miscounts.push(msg);
+                lastPossibleValues = undefined;
+            }
+        } else {
+            let possibleValues = findPossibleValues(msg);
+            if (possibleValues.length == 0) {
+                miscounts.push(msg);
+                lastPossibleValues = undefined;
+            } else {
+                if (lastPossibleValues != undefined) {
+                    if (possibleValues.some(v => lastPossibleValues.some(lv => lv + 1 == v))) {
+                        lastPossibleValues = possibleValues;
+                    } else {
+                        miscounts.push(msg);
+                        lastPossibleValues = undefined;
+                    }
+                } else {
+                    lastPossibleValues = possibleValues;
+                }
             }
         }
-        console.log('---------------------');
     }
 
     return miscounts;

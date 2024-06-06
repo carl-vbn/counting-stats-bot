@@ -47,8 +47,11 @@ module.exports = {
 			.addChoices(
 				{ name: 'Original', value: 'original' },
 				{ name: 'Reincarnated', value: 'new' },
-			)),
-
+			))
+        .addUserOption(option =>
+            option.setName('user')
+            .setDescription('Show miscounts of a specific user')
+            .setRequired(false)),
     /**
      * 
      * @param {CommandInteraction} interaction 
@@ -67,18 +70,32 @@ module.exports = {
 
             const stats = latestStats[channel.id];
             
-            const statsEmbed = new EmbedBuilder()
-            .setColor(0xFF6600)
-            .setTitle('Counting shame')
-            .setURL('https://www.wikicu.com/Counting')
-            .setDescription(`Top miscounters for <#${channel.id}>\nLast updated <t:${Math.floor(stats.time/1000)}:R>`)
-            .addFields(
-                { name: 'Number of miscounts', value: `${stats.miscounts.size}` },
-                { name: 'Top miscounters', value: stats.topMiscouters.slice(0, 10).map(msc => `- ${stats.miscounterUsernames[msc[0]]}: ${msc[1]}`).join('\n') },
-                { name: 'Your personal stats', value: `${stats.miscountsPerUser[interaction.user.id] ?? 0} miscounts` }
-            )
-            .setTimestamp()
-            .setFooter({ text: 'Requested by '+interaction.user.username, iconURL: interaction.user.avatarURL() });
+            const user = interaction.options.getUser('user');
+            let userMiscounts = user ? stats.miscounts.filter(m => m.author.id == user.id) : null;
+
+            const statsEmbed = userMiscounts == null ? new EmbedBuilder()
+                .setColor(0xFF6600)
+                .setTitle('Counting shame')
+                .setURL('https://www.wikicu.com/Counting')
+                .setDescription(`Top miscounters for <#${channel.id}>\nLast updated <t:${Math.floor(stats.time/1000)}:R>`)
+                .addFields(
+                    { name: 'Number of miscounts', value: `${stats.miscounts.size}` },
+                    { name: 'Top miscounters', value: stats.topMiscouters.slice(0, 10).map(msc => `- ${stats.miscounterUsernames[msc[0]]}: ${msc[1]}`).join('\n') },
+                    { name: 'Your personal stats', value: `${stats.miscountsPerUser[interaction.user.id] ?? 0} miscounts` }
+                )
+                .setTimestamp()
+                .setFooter({ text: `Requested by ${interaction.user.username}. The counting-shame command is still very imprecise.`, iconURL: interaction.user.avatarURL() })
+            : new EmbedBuilder()
+                .setColor(0xFF6600)
+                .setTitle('Counting shame')
+                .setURL('https://www.wikicu.com/Counting')
+                .setDescription(`${user.username}'s miscounts for <#${channel.id}>\nLast updated <t:${Math.floor(stats.time/1000)}:R>`)
+                .addFields(
+                    { name: 'Number of miscounts', value: `${userMiscounts.length}` },
+                    { name: 'Miscounts', value: userMiscounts.map(m => `- ${m.content}`).join('\n') }
+                )
+                .setTimestamp()
+                .setFooter({ text: `Requested by ${interaction.user.username}. The counting-shame command is still very imprecise.`, iconURL: interaction.user.avatarURL() });
 
             try {
                 if (defered)
